@@ -4,7 +4,7 @@ module Temp = Cm_core.Temp
 module Types = Cm_core.Types
 module Symbol = Cm_core.Symbol
 
-module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list end) = 
+module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int end) = 
 struct
 
   module TempMap = Map.Make(struct type t = Temp.t let compare = compare end)
@@ -71,6 +71,10 @@ struct
             (fun (acc, ops, o) imm -> 
               let (reg, ops', o) = o#immediate' imm in 
               acc@[reg], ops@ops', o) ([], [], o) imm_list in 
+        if p_idx < X.lib_length then 
+          let ops, cur_reg' = X.lib_handler p_idx (o#get_reg()) reg_list in 
+          -1, ops, {<cur_reg = cur_reg'>}
+        else
         let f_reg, o = o#get_reg(), o#incr() in
         let ops, o = 
           List.fold_left
@@ -79,6 +83,9 @@ struct
         let ops= ops @ [Closure(f_reg, p_idx)] in
         let ops = ops@[Call(f_reg, args_num+1, ret_num+1)] in 
         f_reg, ops, o
+      | `New_array_expr(_, imm) -> 
+        let _, o = o#immediate imm in 
+        o#get_reg(), [Make_Table(o#get_reg(), 100, 0)], o#incr()
       | _ -> failwith "Compiling to lua bytecode ------ new expr not implemented "
 
 
@@ -89,6 +96,10 @@ struct
         cur_reg, [Load_Const(cur_reg, lua_const)], o'#incr ()
       | `Expr(expr) -> 
         o#expr expr
+      | `Array_ref(imm1, imm2) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let key_src, o = o#immediate imm2 in 
+        o#get_reg(), ops@[Load_Table(o#get_reg(), tbl_reg, key_src)], o
       | _ -> failwith "Compiling to lua bytecode ------ part of rvalue not implemented "
     
     method var : var -> int * lua_ops list * 'self = function
@@ -102,6 +113,11 @@ struct
       | _ -> failwith "Compiling to lua bytecode ------ part of var not implemented "
 
     method stmt : stmt -> lua_ops list * 'self = function
+      | `Assign(`Array_ref(imm1, imm2), rvalue) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let idx_src, o = o#immediate imm2 in 
+        let val_reg, ops', o = o#rvalue rvalue in 
+        ops@ops'@[Set_Table(tbl_reg, idx_src, `Register(val_reg))], o
       | `Assign(var, rvalue) -> 
         let (reg_var, var_ops, o) = o#var var in 
         let (reg_rvalue, rvalue_ops, o) = o#rvalue rvalue in 
@@ -127,6 +143,9 @@ struct
         let left_operand, o = o#immediate imm2 in 
         let right_operand, o = o#immediate imm1 in 
         [Cmp({skip_if_not = true; right_operand; left_operand; comp_type = Comp_Lt}); Jump(i)], o
+      | `Static_invoke(_ as cont) -> 
+        let (_, snd, thd) = o#expr (`Static_invoke(cont)) in 
+        (snd, thd)
       | _ -> failwith "Unimplemented"
 
     
@@ -161,22 +180,47 @@ end
 
 
 
+let base = [
+  { func_name=Symbol.symbol "print_int"; func_args=[Types.Primitive(`Int)]; func_ret=Types.Primitive(`Void); local_decls=[]; identities=[]; func_body=[]}
+]
+
+let lib_func_length = 
+  List.length base
+
+let lib_handler i = 
+  match i with 
+    | 0 -> 
+      fun cur_reg reg_ins -> 
+        assert (List.length reg_ins = 1);
+        let reg_in = List.hd reg_ins in
+        [
+          Get_Global(cur_reg, "string");
+          Load_Table(cur_reg+1, cur_reg, `L_String "format");
+          Load_Const(cur_reg+2, `L_String "%i");
+          Move(cur_reg+3, reg_in);
+          Call(cur_reg+1, 3, 2);
+          Get_Global(cur_reg, "print");
+          Call(cur_reg, 2, 1);
+        ], cur_reg
+    | _ -> failwith "impossible"
+
+
 let compile (prog : prog) = 
   let (funcs, _) = prog in 
   let funcs = List.map convert_to_lnum funcs in
-  let () = 
+  (*let () = 
     List.iter 
       (fun func -> print_endline (string_of_func func)) funcs
-    in 
+    in *)
   let main = 
     try List.find (fun func -> func.func_name = Symbol.symbol "main") funcs
     with _ -> failwith "No Main Routine!!" in 
-  let funcs = List.filter (fun func -> func.func_name <> Symbol.symbol "main") funcs in 
+  let funcs = List.filter (fun func -> func.func_name <> Symbol.symbol "main") funcs |> (@) base in 
   let tbl = Hashtbl.create 16 in 
   List.iteri (fun i func -> Hashtbl.add tbl func.func_name i) funcs;
   let sub_units = 
     List.map (fun func -> 
-      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func end in 
+      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length end in 
       let module C = Config(X) in 
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
@@ -186,7 +230,7 @@ let compile (prog : prog) =
         num_params;
         child_functions = [];
       }) funcs in
-  let module X = struct let name2index = Hashtbl.find tbl let args = [] end in 
+  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length end in 
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = visitor#func main.func_body |> fst in 

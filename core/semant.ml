@@ -39,12 +39,15 @@ module Env : ENV with type ty = Ast.ty = struct
   type entry = Local of ty | Parameter of int * ty * Temp.t option ref | Global of ty | Func of ty list * ty 
   let base_senv = Symbol.empty 
 
-  let base_venv = Symbol.empty
+  let base_venv = Symbol.enter (Symbol.symbol "print_int") (Func([Ast.Int], Ast.Void)) Symbol.empty
 end
 
 
 type def_bind = 
   | Vardef | Fundef of bool ref | Strucdef of bool ref
+
+let def_base = 
+  Symbol.enter (Symbol.symbol "print_int") (Fundef(ref true)) empty
 
 type def_env = def_bind Symbol.table 
 type str_env = (Symbol.t * ty) list Symbol.table
@@ -684,8 +687,8 @@ let rec trans_stmt : status -> var_env -> str_env -> stmt -> P.t =
   in trstmt
 
 let check s : M.prog = 
-  let glb_senv =(check_def empty s) in 
+  let glb_senv = (check_def def_base s) in 
   let () = check_init s in 
-  let _ = trans_stmt Global empty glb_senv s in 
+  let _ = trans_stmt Global Env.base_venv glb_senv s in 
   let class_info = map (List.map (fun (s, ty) -> s, type_convert ty)) glb_senv in
   get_mimple_after_pre (), class_info

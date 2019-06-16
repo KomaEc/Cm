@@ -71,6 +71,36 @@ module Node = struct
     fun f acc node -> 
       List.fold_left f acc node.succ
 
+  let fold_succ_fbs : ('acc -> t -> 'acc) -> 'acc -> t -> 'acc = 
+    let pick_out_as_first : ('a -> bool) -> 'a list -> 'a list = fun p -> 
+      let rec aux c = function
+        | [] -> c [] 
+        | x::xs when p x -> x :: c xs
+        | x::xs -> aux (fun l -> x::l |> c) xs in 
+      aux (fun x -> x)  in
+    let pick_out_as_last : ('a -> bool) -> 'a list -> 'a list = fun p -> 
+      let rec aux c = function 
+        | [] -> c []
+        | x::xs when p x -> aux (fun l -> x::l |> c) xs
+        | x::xs -> x :: aux c xs in aux (fun l -> l) in
+    fun f acc node -> 
+      match List.length node.succ with 
+        | 2 -> 
+          let length = Array.length node.instrs in 
+          assert (length > 0);
+          let last = node.instrs.(length-1) in 
+          begin 
+            match last with 
+              | `If(_, `Line_num(id)) -> 
+                let succ = pick_out_as_last (fun node -> node.id = id) node.succ in 
+                List.fold_left f acc succ
+              | `Goto(`Line_num(id)) -> 
+                let succ = pick_out_as_first (fun node -> node.id = id) node.succ in 
+                List.fold_left f acc succ
+              | _ -> List.fold_left f acc node.succ
+          end
+        | _ -> List.fold_left f acc node.succ
+
   let fold_pred : ('acc -> t -> 'acc) -> 'acc -> t -> 'acc = 
     fun f acc node -> 
       List.fold_left f acc node.pred
@@ -208,6 +238,29 @@ struct
   end
 end
 
+module Fold_fbs = (* false branch first *)
+struct
+  module IntSet = Set.Make(struct type t = int let compare = compare end)
+  let mem node set = let id = Node.get_id node in IntSet.mem id set
+  class ['acc] visitor = 
+  object((o : 'self))
+
+    val checked : IntSet.t = IntSet.empty
+    method node : (Node.t -> 'acc -> 'acc) -> Node.t -> 'acc -> 'acc * 'self = 
+      fun f node acc -> 
+        let id = Node.get_id node in
+        let acc' = f node acc 
+        and checked' = IntSet.add id checked in
+        Node.fold_succ_fbs
+          (fun ((acc''', o'') as prev) node' -> if mem node' checked then prev else o''#node f node' acc''')
+            (acc', {<checked = checked'>}) node
+    method proc : (Node.t -> 'acc -> 'acc) -> t -> 'acc -> 'acc * 'self = 
+      fun f proc acc -> 
+        o#node f proc.start_node acc
+
+  end
+end
+
 (* Need a false branch first !!! *)
 
 let fold_preorder f proc acc = 
@@ -220,6 +273,11 @@ let fold_bfs f proc acc =
   visitor#proc f proc acc
   |> fst
 
+let fold_fbs f proc acc = 
+  let visitor = new Fold_fbs.visitor in 
+  visitor#proc f proc acc 
+  |> fst
+
 let iter_preorder f proc = 
   fold_preorder (fun node () -> f node) proc ()
 
@@ -227,7 +285,7 @@ let iter_bfs f proc =
   fold_bfs (fun node () -> f node) proc () 
 
 let layout (proc : t) = 
-  fold_preorder
+  fold_fbs
     (fun node acc -> if Node.is_internal node then (Node.get_id node) :: acc else acc) 
       proc []
   |> List.rev
@@ -417,18 +475,18 @@ let from_func (func: M.func) (find_leader : M.stmt array -> bool array) : t =
       aux.(!offset) <- stmt;
       incr offset) instrs;
     aux in 
-  let () = 
+  (*let () = 
     Array.fold_left
       (fun acc stmt -> acc ^ Mimple.string_of_stmt stmt ^ "\n")
         "" instrs 
-    |> print_endline in
+    |> print_endline in*)
   let instrs = convert_to_lnum() in
-  print_endline "hihihihih";
+  (*print_endline "hihihihih";
   let () = 
     Array.fold_left
       (fun acc stmt -> acc ^ Mimple.string_of_stmt stmt ^ "\n")
         "" instrs 
-    |> print_endline in
+    |> print_endline in*)
   let length = Array.length instrs in
   (*
   let is_leader = Array.make (length + 1) false in

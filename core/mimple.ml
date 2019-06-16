@@ -564,8 +564,8 @@ let string_of_func : func -> string =
     "\nBeginFunc " ^ Symbol.name func.func_name 
     ^ " : " ^ string_of_ty_list func.func_args ^ " -> " 
     ^ string_of_ty func.func_ret ^ "\n"
-    (*^ (List.fold_left (fun acc decl -> acc ^ string_of_decl decl ^ "\n") "" local_decls)
-    ^ (List.fold_left (fun acc idt -> acc ^ string_of_identity idt ^ "\n") "" identities)*)
+    (*^ (List.fold_left (fun acc decl -> acc ^ string_of_decl decl ^ "\n") "" local_decls)*)
+    ^ (List.fold_left (fun acc idt -> acc ^ string_of_identity idt ^ "\n") "" func.identities)
     ^ (List.fold_left (fun acc stmt -> acc ^ string_of_stmt stmt ^ "\n") "" func.func_body)
     ^ "EndFunc\n"
     

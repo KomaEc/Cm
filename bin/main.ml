@@ -6,7 +6,6 @@ open Lexing
 
 module Lexer = Cm_core.Lexer
 module Mimple = Cm_core.Mimple
-module Basic_block = Cm_core.Basic_block
 open Cm_core.Printer
 open Cm_core.Semant
 open Cm_core.Support.Error

@@ -111,10 +111,10 @@ let get_labels : stmt list -> label list =
 
 let goto_peephole : stmt list -> stmt list = fun stmt_list -> 
   let is_unique = unique_label stmt_list in
-  let labels = get_labels stmt_list in
+  (*let labels = get_labels stmt_list in
   Cm_util.Printing.string_of_list
     (fun l -> Temp.string_of_label l ^ " : " ^ string_of_int (is_unique l)) labels 
-|> print_endline;
+|> print_endline;*)
   let rec aux = function
     | [] -> []
     | [s] -> [s]
