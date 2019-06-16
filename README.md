@@ -8,7 +8,7 @@ A compiler for a syntactically C-like imperative programming language, supportin
 
 ## Workflow
 * Lexing and Parsing
-* Sementic Checking (type checking, early live analysis)
+* Sementic Checking (type checking, early liveness analysis)
 * Translating to IR
 * Optimizing (partial redundancy elimination, propagation + dead code elimination)
 * Translating to lua bytecode
@@ -21,6 +21,7 @@ Mimple is an simplified version of Jimple (SOOT Java optimization framework). In
 
 ## Data Flow Analysis
 The core data flow analysis engine is written in the `dataflow.ml` file. It uses a worklist algorithm. Currently supported domains: finite set domain (live variables, available expressions, etc.), finite map domain (constant propagation, copy propagation, etc.).
+
 Partial redundancy elimination is done in a separate file `pre.ml`. It is the most challenging task in this project. This part is done according to the book "Compilers: Principles, Techniques, and Tools".
 
 ## Requirement
@@ -29,7 +30,7 @@ This project requires
 * opam version >= 2.0.4
 * dune version >= 1.10.0
 
-To install in MacOS, type
+To install on MacOS, type
 ```bash
 brew install ocaml
 brew install opam
