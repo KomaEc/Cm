@@ -20,7 +20,8 @@ The `semant.ml` file checks def-before-use, variable initialization (not include
 Mimple is an simplified version of Jimple (SOOT Java optimization framework). In this toy language, global vars are treated as static field reference.
 
 ## Data Flow Analysis
-The core data flow analysis engine is written in the `dfa.ml` file. It uses a worklist algorithm. Currently supported domains: finite set domain (live variables, available expressions, etc.), finite map domain (constant propagation, copy propagation, etc.).
+The core data flow analysis engine is written in the `dataflow.ml` file. It uses a worklist algorithm. Currently supported domains: finite set domain (live variables, available expressions, etc.), finite map domain (constant propagation, copy propagation, etc.).
+Partial redundancy elimination is done in a separate file `pre.ml`. It is the most challenging task in this project. This part is done according to the book "Compilers: Principles, Techniques, and Tools".
 
 ## To Use
 ```bash
