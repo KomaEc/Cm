@@ -1,9 +1,10 @@
 # Cm-Compiler
 ## Intro
-A compiler for a syntactically C-like imperative programming language (its semantics are closer to Java. For example, there's no pointer. The types are divided into two groups, primitive type and object type. Values of object types are passed by reference, etc.), supporting (currently) one-dimentional array and struct. (Under construction)
+A compiler for a syntactically C-like imperative programming language, supporting (currently) one-dimentional array and struct. The front end is not very well-designed, while the mid end focuses on data flow analysis (with generic interface). The back end is trash (compiling to lua vm).
 
-## Goals
-A compiler for an imperative programming language, with a middle end (Mimple) supporting pointer analysis. The final objective is to compile the intermmediate representation to Lua bytecode.
+## Programming Paradigm
+* Generic. This compiler has a generic interface to data flow problem using OCaml module system. It is easy to extend.
+* Visitor Pattern. In the intermediate representation and control flow graph, thie compiler uses visitor pattern to traverse abstract syntax tree, graph, etc. This part makes use of OCaml object system. Using object to represent system makes it easy to record state while traversing.
 
 ## Currently
 With an input C file, the compiler transforms the source file into an AST, and performs sementic checks. After the semantics checking, the compiler will transform the original program into an intermediate representation Mimple. The result will be printed to the standard output channel.
