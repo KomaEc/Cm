@@ -23,9 +23,25 @@ Mimple is an simplified version of Jimple (SOOT Java optimization framework). In
 The core data flow analysis engine is written in the `dataflow.ml` file. It uses a worklist algorithm. Currently supported domains: finite set domain (live variables, available expressions, etc.), finite map domain (constant propagation, copy propagation, etc.).
 Partial redundancy elimination is done in a separate file `pre.ml`. It is the most challenging task in this project. This part is done according to the book "Compilers: Principles, Techniques, and Tools".
 
-## To Use
+## Requirement
+This project requires 
+* OCaml version >= 4.07.0
+* opam version >= 2.0.4
+* dune version >= 1.10.0
+To install in MacOS, type
 ```bash
-dune build ./bin/main.exe
-dune exec ./bin/main.exe ./test/basic.cm
+brew install ocaml
+brew install opam
+opam init
+eval `opam env`
+opam switch create 4.08.0
+eval `opam env`
+opam install dune
 ```
-File "basic.cm" is written in Cm. A translated version will be printed to the stdout channel.
+
+## To Install and Uninstall
+```bash
+make $(PLAT)
+make clean
+```
+Only macosx is supported:) 

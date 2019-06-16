@@ -1,5 +1,0 @@
-(** @canonical Cm_backend.Assembler *)
-module Assembler = Cm_backend__Assembler
-
-(** @canonical Cm_backend.Binary *)
-module Binary = Cm_backend__Binary
