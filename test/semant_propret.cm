@@ -1,0 +1,8 @@
+void main() {
+
+
+    if (true) return;
+    else {int i = 3; return; }
+
+    return 3;
+}

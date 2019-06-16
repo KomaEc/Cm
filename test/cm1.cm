@@ -1,0 +1,16 @@
+void main() {
+
+    int a;
+    int b = 3;
+    int c = b * 10;
+    bool x = false;
+
+    if (x) {
+        a = b + c;
+    } else {
+
+    }
+
+
+    return;
+}

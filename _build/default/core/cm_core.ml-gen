@@ -1,0 +1,59 @@
+(** @canonical Cm_core.Ast *)
+module Ast = Cm_core__Ast
+
+(** @canonical Cm_core.Basic_block *)
+module Basic_block = Cm_core__Basic_block
+
+(** @canonical Cm_core.Bvset *)
+module Bvset = Cm_core__Bvset
+
+(** @canonical Cm_core.Cfg *)
+module Cfg = Cm_core__Cfg
+
+(** @canonical Cm_core.Dataflow *)
+module Dataflow = Cm_core__Dataflow
+
+(** @canonical Cm_core.Dfa *)
+module Dfa = Cm_core__Dfa
+
+(** @canonical Cm_core.FiniteMap *)
+module FiniteMap = Cm_core__FiniteMap
+
+(** @canonical Cm_core.Lexer *)
+module Lexer = Cm_core__Lexer
+
+(** @canonical Cm_core.Mimple *)
+module Mimple = Cm_core__Mimple
+
+(** @canonical Cm_core.Parser *)
+module Parser = Cm_core__Parser
+
+(** @canonical Cm_core.Pre *)
+module Pre = Cm_core__Pre
+
+(** @canonical Cm_core.Printer *)
+module Printer = Cm_core__Printer
+
+(** @canonical Cm_core.Procdesc *)
+module Procdesc = Cm_core__Procdesc
+
+(** @canonical Cm_core.Semant *)
+module Semant = Cm_core__Semant
+
+(** @canonical Cm_core.Support *)
+module Support = Cm_core__Support
+
+(** @canonical Cm_core.Symbol *)
+module Symbol = Cm_core__Symbol
+
+(** @canonical Cm_core.Temp *)
+module Temp = Cm_core__Temp
+
+(** @canonical Cm_core.Transform *)
+module Transform = Cm_core__Transform
+
+(** @canonical Cm_core.Translate *)
+module Translate = Cm_core__Translate
+
+(** @canonical Cm_core.Types *)
+module Types = Cm_core__Types

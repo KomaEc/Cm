@@ -1,0 +1,14 @@
+int foo(int x, int y) {
+    int z = 4;
+    return x + y;
+}
+
+bool bar(int z) {
+    if (z > 0) return true;
+    else return false;
+}
+
+int main() {
+    int x = 3;
+    int x = true;
+}

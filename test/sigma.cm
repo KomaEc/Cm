@@ -1,0 +1,16 @@
+
+int sum2(int[] a, int l, int r) {
+    int res = 0;
+    int i = l;
+    while (i <= r) {
+        res = res + a[i];
+        i = i + 1;
+    }
+    return res;
+}
+
+int main() {
+    int[] a = new int[100];
+    for (int i = 0; i < 100; i = i + 1) a[i] = i;
+    return sum2(a, 0, 99);
+}

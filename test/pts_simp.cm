@@ -1,0 +1,11 @@
+class myObject {}
+
+int main() {
+    myObject a = new myObject;
+    myObject b = new myObject;
+    myObject c = new myObject;
+    a = c;
+    c = b;
+    b = a;
+    return 0;
+}

@@ -1,0 +1,12 @@
+void main() {
+    int a;
+    int b = 0;
+    int d;
+    if (0 < 1) {
+        a = 1;
+    } else {
+        a = 3;
+    }
+    d = a + b;
+    return;
+}

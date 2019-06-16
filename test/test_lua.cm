@@ -1,0 +1,14 @@
+int get2() {
+    return 2;
+}
+
+int add(int x, int y) {
+    return x + y;
+}
+
+void main() {
+    int a = get2();
+    int b = 3;
+    int c = add(a, b);
+    return ;
+}

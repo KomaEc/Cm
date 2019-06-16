@@ -1,0 +1,3 @@
+(executable
+  (name cmc)
+  (libraries cm_core cm_util cm_backend))

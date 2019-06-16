@@ -1,0 +1,22 @@
+void main() {
+
+    int a;
+    int b = 3;
+    int c = b * 10;
+    int x = 0;
+    int d;
+
+    if (x == 0) {
+        a = b + c;
+    } else {
+        c = 2;
+    }
+
+    d = b + c;
+
+    while (1 < 0) {
+        int e = b + c;
+    }
+
+    return;
+}

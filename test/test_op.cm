@@ -1,0 +1,17 @@
+
+void f(int a, int b) {
+    return;
+}
+
+int main(int a, int b) {
+
+    int op0 = a;
+    int op1 = b;
+    op0 = op0 + op1;
+    int x = op0;
+
+    op0 = a;
+    op1 = b;
+    f(op0, op1);
+    return x;
+}

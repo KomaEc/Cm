@@ -1,0 +1,43 @@
+class tree {
+    int x;
+    tree left;
+    tree right;
+}
+
+void insert(tree t, int k) {
+    if (t.x == k) return;
+    else if (t.x < k) {
+        if (t.left == NULL) {
+            t.left = new tree;
+            t.left.x = k;
+        }
+        else insert(t.left, k);
+    }
+    else {
+        if (t.right == NULL) {
+            t.right = new tree;
+            t.right.x = k;
+        }
+        else insert(t.right, k);
+    }
+    return ;
+}
+
+int main() {
+    tree t = new tree;
+    t.x = 3;
+    t.left = new tree;
+    t.right = new tree;
+    t.left.x = 2;
+    t.right.x = 5;
+    t.left.left = NULL;
+    t.left.right = NULL;
+    t.right.left = NULL;
+    t.right.right = NULL;
+    insert(t, 1);
+    tree[] forest = new tree[10];
+    for (int i = 0; i < 10; i = i + 1) {
+        forest[i].x = i;
+    }
+    return 0;
+}

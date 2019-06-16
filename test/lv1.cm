@@ -1,0 +1,13 @@
+int main() {
+    int y = 0;
+    int x = 1;
+    int z;
+    y = x;
+    z = 1;
+    while (y != 0) {
+        z = z * y;
+        y = y - 1;
+    }
+    y = 0;
+    return z;
+}

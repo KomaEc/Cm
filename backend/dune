@@ -1,0 +1,4 @@
+(library
+  (name cm_backend)
+  (libraries cm_util core cm_core)
+  (c_names sizes))
