@@ -28,6 +28,7 @@ This project requires
 * OCaml version >= 4.07.0
 * opam version >= 2.0.4
 * dune version >= 1.10.0
+
 To install in MacOS, type
 ```bash
 brew install ocaml
