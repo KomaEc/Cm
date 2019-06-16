@@ -47,3 +47,9 @@ make $(PLAT)
 make clean
 ```
 Only macosx is supported:) 
+
+## To Use
+```bash
+cd Cm
+python run.py --file <path-to-file>
+```
