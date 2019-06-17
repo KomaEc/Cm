@@ -36,7 +36,7 @@ brew install ocaml
 brew install opam
 opam init
 eval `opam env`
-opam switch create 4.08.0
+opam switch create 4.07.0
 eval `opam env`
 opam install dune
 ```

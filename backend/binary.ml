@@ -13,16 +13,10 @@ struct
 
     val cur_reg : int = List.length X.args
 
-    val mutable recursive_depth : int = 0
-
     val temps2reg : int TempMap.t = 
       let i = ref (-1) in 
       List.fold_left
         (fun acc t -> incr i; TempMap.add t !i acc) TempMap.empty X.args
-
-    method set_depth : int -> unit = fun d -> recursive_depth <- d
-
-    method get_depth : unit -> int = fun () -> recursive_depth
 
     method get_reg : unit -> int = fun () -> cur_reg
 
@@ -97,6 +91,15 @@ struct
       | `New_array_expr(_, imm) -> 
         let _, o = o#immediate imm in 
         o#get_reg(), [Make_Table(o#get_reg(), 100, 0)], o#incr()
+      | `New_expr(`ClassTy(class_name)) -> 
+        let field_ty_list = Symbol.lookup class_name X.class_info in 
+        let tbl_reg, o = o#get_reg(), o#incr() in 
+        let op = [Make_Table(tbl_reg, 0, 100)] in
+        let ops = List.fold_left
+          (fun acc (fname, _) -> 
+            acc@[Set_Table(tbl_reg, (`L_String (Symbol.name fname)), `L_Nill)]) op field_ty_list in 
+        tbl_reg, ops, o
+
       | _ -> failwith "Compiling to lua bytecode ------ new expr not implemented "
 
 
@@ -110,6 +113,10 @@ struct
       | `Array_ref(imm1, imm2) -> 
         let tbl_reg, ops, o = o#immediate' imm1 in 
         let key_src, o = o#immediate imm2 in 
+        o#get_reg(), ops@[Load_Table(o#get_reg(), tbl_reg, key_src)], o
+      | `Instance_field_ref(imm1, (fname, _)) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let key_src : rk_source = `L_String (Symbol.name fname) in
         o#get_reg(), ops@[Load_Table(o#get_reg(), tbl_reg, key_src)], o
       | _ -> failwith "Compiling to lua bytecode ------ part of rvalue not implemented "
     
@@ -127,6 +134,11 @@ struct
       | `Assign(`Array_ref(imm1, imm2), rvalue) -> 
         let tbl_reg, ops, o = o#immediate' imm1 in 
         let idx_src, o = o#immediate imm2 in 
+        let val_reg, ops', o = o#rvalue rvalue in 
+        ops@ops'@[Set_Table(tbl_reg, idx_src, `Register(val_reg))], o
+      | `Assign(`Instance_field_ref(imm1, (fname, _)), rvalue) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let idx_src : rk_source = `L_String (Symbol.name fname) in 
         let val_reg, ops', o = o#rvalue rvalue in 
         ops@ops'@[Set_Table(tbl_reg, idx_src, `Register(val_reg))], o
       | `Assign(var, rvalue) -> 

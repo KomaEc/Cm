@@ -30,14 +30,14 @@ int main() {
     t.right = new tree;
     t.left.x = 2;
     t.right.x = 5;
-    t.left.left = NULL;
-    t.left.right = NULL;
-    t.right.left = NULL;
-    t.right.right = NULL;
     insert(t, 1);
     tree[] forest = new tree[10];
     for (int i = 0; i < 10; i = i + 1) {
+        forest[i] = new tree;
         forest[i].x = i;
+    }
+    for (int i = 0; i < 10; i = i + 1) {
+        print_int(forest[i].x);
     }
     return 0;
 }
