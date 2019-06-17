@@ -94,7 +94,7 @@ struct
         o#get_reg(), [Make_Table(o#get_reg(), n, 0)], o#incr()
       | `New_array_expr(_, imm) -> 
         let _, o = o#immediate imm in 
-        o#get_reg(), [Make_Table(o#get_reg(), 100, 0)], o#incr()
+        o#get_reg(), [Make_Table(o#get_reg(), 16, 0)], o#incr()
       | `New_expr(`ClassTy(class_name)) -> 
         let field_ty_list = Symbol.lookup class_name X.class_info in 
         let tbl_reg, o = o#get_reg(), o#incr() in 
@@ -345,6 +345,7 @@ let compile (prog : prog) =
     List.iter 
       (fun func -> print_endline (string_of_func func)) funcs
     in *)
+  let log_out = open_out "cm_out_bin.txt" in
   let main = 
     try List.find (fun func -> func.func_name = Symbol.symbol "main") funcs
     with _ -> failwith "No Main Routine!!" in 
@@ -363,7 +364,7 @@ let compile (prog : prog) =
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
 
-      let () = string_of_lua body |> print_endline in
+      let () = output_string log_out @@ string_of_lua body in
 
       let num_params = List.length func.func_args in 
       {
@@ -380,7 +381,7 @@ let compile (prog : prog) =
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = (visitor#func main.func_body |> fst) in 
-  let () = string_of_lua main_body |> print_endline in
+  let () = output_string log_out @@ string_of_lua main_body in
 
 
   let func_unit = 

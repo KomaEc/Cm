@@ -55,4 +55,4 @@ Only macosx is supported:)
 cd Cm
 python run.py --file <path-to-file>
 ```
-For example, to run the test program, type `python run.py --file ./test/pre.cm`
+For example, to run the test program, type `python run.py --file ./test/pre.cm`, and the program will be executed. The binary file will be recorded into `cm_out_bin.txt`. 
