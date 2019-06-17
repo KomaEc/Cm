@@ -90,16 +90,15 @@ struct
         let ops= ops @ func_ops in
         let ops = ops@[Call(f_reg, args_num+1, ret_num+1)] in 
         f_reg, ops, o
+      | `New_array_expr(_, `Const(`Int_const(n))) -> 
+        o#get_reg(), [Make_Table(o#get_reg(), n, 0)], o#incr()
       | `New_array_expr(_, imm) -> 
         let _, o = o#immediate imm in 
         o#get_reg(), [Make_Table(o#get_reg(), 100, 0)], o#incr()
       | `New_expr(`ClassTy(class_name)) -> 
         let field_ty_list = Symbol.lookup class_name X.class_info in 
         let tbl_reg, o = o#get_reg(), o#incr() in 
-        let op = [Make_Table(tbl_reg, 0, 100)] in
-        let ops = List.fold_left
-          (fun acc (fname, _) -> 
-            acc@[Set_Table(tbl_reg, (`L_String (Symbol.name fname)), `L_Nill)]) op field_ty_list in 
+        let ops = [Make_Table(tbl_reg, 0, List.length field_ty_list)] in
         tbl_reg, ops, o
 
       | _ -> failwith "Compiling to lua bytecode ------ new expr not implemented "
