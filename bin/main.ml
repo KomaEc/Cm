@@ -97,12 +97,18 @@ let () =
 
          print_endline "hi";
 
+         let prog' = T.get_mimple() in 
+         Mimple.print_prog (prog', Cm_core.Symbol.empty);
+          print_newline();
 
-          let prog1 = T.get_mimple1() in 
+
+          let prog1 = T.get_mimple_after_pre() in 
           Mimple.print_prog (prog1, Cm_core.Symbol.empty);
           print_newline();
+          (*
           print_string "Analysis Result : \n\n";
           Dfa.analysis_prog (prog1, Cm_core.Symbol.empty);
+          *)
           print_string "Optimizting... \n\n";
           let prog4 = T.optimize() in 
           Mimple.print_prog (prog4, Cm_core.Symbol.empty);

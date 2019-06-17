@@ -366,19 +366,19 @@ let rec trans_stmt : status -> var_env -> str_env -> stmt -> P.t =
         end
       | FieldVar(var, fname, info) -> 
         let (var, ty) = trvar var in 
-        let ty' = 
+        let ty', class_name = 
           begin
             match ty with 
               | NameTy(ty_id) -> 
                 let tbl = lookup ty_id glb_senv in 
                 begin 
-                  try List.assoc fname tbl
+                  try List.assoc fname tbl, ty_id
                   with Not_found -> raise (No_Fieldname info)
                 end
               | _ -> raise (Not_Struct info)
           end in 
         let t = var_to_immediate ty var in 
-        (`Instance_field_ref(t, (fname, type_convert ty')), ty')
+        (`Instance_field_ref(t, (fname, class_name)), ty')
       | SubscriptVar(var, expr, info) -> 
         let (var, ty) = trvar var in 
         let ty' = 

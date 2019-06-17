@@ -4,7 +4,7 @@ module Temp = Cm_core.Temp
 module Types = Cm_core.Types
 module Symbol = Cm_core.Symbol
 
-module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool end) = 
+module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool val class_info : (Temp.label * Types.ty) list Symbol.table end) = 
 struct
 
   module TempMap = Map.Make(struct type t = Temp.t let compare = compare end)
@@ -13,16 +13,10 @@ struct
 
     val cur_reg : int = List.length X.args
 
-    val mutable recursive_depth : int = 0
-
     val temps2reg : int TempMap.t = 
       let i = ref (-1) in 
       List.fold_left
         (fun acc t -> incr i; TempMap.add t !i acc) TempMap.empty X.args
-
-    method set_depth : int -> unit = fun d -> recursive_depth <- d
-
-    method get_depth : unit -> int = fun () -> recursive_depth
 
     method get_reg : unit -> int = fun () -> cur_reg
 
@@ -53,7 +47,7 @@ struct
       | `Minus -> Arith_Sub, o
       | `Times -> Arith_Mul, o
       | `Div -> Arith_Div, o
-
+    (* {o#get_reg()}return the register of the result of the computation. o#get_reg() always return a new reg *)
     method expr : expr -> int * lua_ops list * 'self = function
       | `Bin(imm1, binop, imm2) ->
         let left_src, o = o#immediate imm1 in 
@@ -97,6 +91,15 @@ struct
       | `New_array_expr(_, imm) -> 
         let _, o = o#immediate imm in 
         o#get_reg(), [Make_Table(o#get_reg(), 100, 0)], o#incr()
+      | `New_expr(`ClassTy(class_name)) -> 
+        let field_ty_list = Symbol.lookup class_name X.class_info in 
+        let tbl_reg, o = o#get_reg(), o#incr() in 
+        let op = [Make_Table(tbl_reg, 0, 100)] in
+        let ops = List.fold_left
+          (fun acc (fname, _) -> 
+            acc@[Set_Table(tbl_reg, (`L_String (Symbol.name fname)), `L_Nill)]) op field_ty_list in 
+        tbl_reg, ops, o
+
       | _ -> failwith "Compiling to lua bytecode ------ new expr not implemented "
 
 
@@ -110,6 +113,10 @@ struct
       | `Array_ref(imm1, imm2) -> 
         let tbl_reg, ops, o = o#immediate' imm1 in 
         let key_src, o = o#immediate imm2 in 
+        o#get_reg(), ops@[Load_Table(o#get_reg(), tbl_reg, key_src)], o
+      | `Instance_field_ref(imm1, (fname, _)) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let key_src : rk_source = `L_String (Symbol.name fname) in
         o#get_reg(), ops@[Load_Table(o#get_reg(), tbl_reg, key_src)], o
       | _ -> failwith "Compiling to lua bytecode ------ part of rvalue not implemented "
     
@@ -127,6 +134,11 @@ struct
       | `Assign(`Array_ref(imm1, imm2), rvalue) -> 
         let tbl_reg, ops, o = o#immediate' imm1 in 
         let idx_src, o = o#immediate imm2 in 
+        let val_reg, ops', o = o#rvalue rvalue in 
+        ops@ops'@[Set_Table(tbl_reg, idx_src, `Register(val_reg))], o
+      | `Assign(`Instance_field_ref(imm1, (fname, _)), rvalue) -> 
+        let tbl_reg, ops, o = o#immediate' imm1 in 
+        let idx_src : rk_source = `L_String (Symbol.name fname) in 
         let val_reg, ops', o = o#rvalue rvalue in 
         ops@ops'@[Set_Table(tbl_reg, idx_src, `Register(val_reg))], o
       | `Assign(var, rvalue) -> 
@@ -321,7 +333,7 @@ let lib_handler i =
 
 
 let compile (prog : prog) = 
-  let (funcs, _) = prog in 
+  let (funcs, class_info) = prog in 
   let funcs = List.map convert_to_lnum funcs in
   (*let () = 
     List.iter 
@@ -335,7 +347,7 @@ let compile (prog : prog) =
   List.iteri (fun i func -> Hashtbl.add tbl func.func_name i) funcs;
   let sub_units = 
     List.map (fun func -> 
-      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true end in 
+      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true let class_info = class_info end in 
       let module C = Config(X) in 
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
@@ -348,7 +360,7 @@ let compile (prog : prog) =
         num_params;
         child_functions = [];
       }) funcs in
-  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false end in 
+  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false let class_info = class_info end in 
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = (visitor#func main.func_body |> fst) in 

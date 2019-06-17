@@ -48,7 +48,7 @@ and rvalue = [
 
 and method_signature = Symbol.t * ty list * ty
 
-and field_signature = Symbol.t * ty
+and field_signature = Symbol.t * Symbol.t
 
 and stmt = [
    | `Assign of var * rvalue
@@ -480,8 +480,8 @@ and string_of_method_sig : method_signature -> string =
     ^ " [" ^ string_of_ty_list ty_list ^ " : " ^ string_of_ty ty ^ "]"
 
 and string_of_field_sig : field_signature -> string = 
-  fun (name, ty) -> 
-    Symbol.name name ^ " : " ^ string_of_ty ty
+  fun (name, _) -> 
+    Symbol.name name (*^ " : " ^ string_of_ty ty*)
 
 and string_of_target : target -> string = 
   function 

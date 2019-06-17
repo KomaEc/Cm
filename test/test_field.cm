@@ -1,0 +1,15 @@
+class tree {
+    int x;
+    tree left;
+    tree right;
+}
+
+void main() {
+    tree t = new tree;
+    t.x = 2;
+    print_int(t.x);
+    t.left = new tree;
+    t.left.x = 3;
+    print_int(t.left.x);
+    return;
+}
