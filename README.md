@@ -29,6 +29,7 @@ This project requires
 * OCaml version >= 4.07.0
 * opam version >= 2.0.4
 * dune version >= 1.10.0
+* menhir
 
 To install on MacOS, type
 ```bash
@@ -39,6 +40,7 @@ eval `opam env`
 opam switch create 4.07.0
 eval `opam env`
 opam install dune
+opam install menhir
 ```
 
 ## To Install and Uninstall
