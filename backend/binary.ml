@@ -4,7 +4,7 @@ module Temp = Cm_core.Temp
 module Types = Cm_core.Types
 module Symbol = Cm_core.Symbol
 
-module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool end) = 
+module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool val class_info : (Temp.label * Types.ty) list Symbol.table end) = 
 struct
 
   module TempMap = Map.Make(struct type t = Temp.t let compare = compare end)
@@ -321,7 +321,7 @@ let lib_handler i =
 
 
 let compile (prog : prog) = 
-  let (funcs, _) = prog in 
+  let (funcs, class_info) = prog in 
   let funcs = List.map convert_to_lnum funcs in
   (*let () = 
     List.iter 
@@ -335,7 +335,7 @@ let compile (prog : prog) =
   List.iteri (fun i func -> Hashtbl.add tbl func.func_name i) funcs;
   let sub_units = 
     List.map (fun func -> 
-      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true end in 
+      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true let class_info = class_info end in 
       let module C = Config(X) in 
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
@@ -348,7 +348,7 @@ let compile (prog : prog) =
         num_params;
         child_functions = [];
       }) funcs in
-  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false end in 
+  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false let class_info = class_info end in 
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = (visitor#func main.func_body |> fst) in 
