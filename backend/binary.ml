@@ -4,6 +4,8 @@ module Temp = Cm_core.Temp
 module Types = Cm_core.Types
 module Symbol = Cm_core.Symbol
 
+exception HAHAHA
+
 module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool val class_info : (Temp.label * Types.ty) list Symbol.table end) = 
 struct
 
@@ -364,8 +366,8 @@ let compile (prog : prog) =
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = (visitor#func main.func_body |> fst) in 
-
   let () = string_of_lua main_body |> print_endline in
+
 
   let func_unit = 
   {
