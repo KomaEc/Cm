@@ -310,7 +310,12 @@ let string_of_lua : lua_ops list -> string =
 
 
 let base = [
-  { func_name=Symbol.symbol "print_int"; func_args=[Types.Primitive(`Int)]; func_ret=Types.Primitive(`Void); local_decls=[]; identities=[]; func_body=[]}
+  { func_name=Symbol.symbol "print_int";
+    func_args=[Types.Primitive(`Int)];
+    func_ret=Types.Primitive(`Void); 
+    local_decls=[]; 
+    identities=[]; 
+    func_body=[]}
 ]
 
 let lib_func_length = 
@@ -349,7 +354,12 @@ let compile (prog : prog) =
   List.iteri (fun i func -> Hashtbl.add tbl func.func_name i) funcs;
   let sub_units = 
     List.map (fun func -> 
-      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true let class_info = class_info end in 
+      let module X = struct let name2index = Hashtbl.find tbl 
+                            let args = get_args func 
+                            let lib_handler = lib_handler 
+                            let lib_length = lib_func_length 
+                            let is_child = true 
+                            let class_info = class_info end in 
       let module C = Config(X) in 
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
@@ -362,7 +372,12 @@ let compile (prog : prog) =
         num_params;
         child_functions = [];
       }) funcs in
-  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false let class_info = class_info end in 
+  let module X = struct let name2index = Hashtbl.find tbl 
+                        let args = [] 
+                        let lib_handler = lib_handler 
+                        let lib_length = lib_func_length 
+                        let is_child = false 
+                        let class_info = class_info end in 
   let module C = Config(X) in 
   let visitor = new C.visitor in 
   let main_body = (visitor#func main.func_body |> fst) in 
