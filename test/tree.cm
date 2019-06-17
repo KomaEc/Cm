@@ -6,7 +6,7 @@ class tree {
 
 void insert(tree t, int k) {
     if (t.x == k) return;
-    else if (t.x < k) {
+    else if (t.x > k) {
         if (t.left == NULL) {
             t.left = new tree;
             t.left.x = k;
@@ -23,7 +23,15 @@ void insert(tree t, int k) {
     return ;
 }
 
-int main() {
+void print_tree(tree t) {
+    if (t == NULL) return;
+    print_tree(t.left);
+    print_int(t.x);
+    print_tree(t.right);
+    return;
+}
+
+void main() {
     tree t = new tree;
     t.x = 3;
     t.left = new tree;
@@ -39,5 +47,11 @@ int main() {
     for (int i = 0; i < 10; i = i + 1) {
         print_int(forest[i].x);
     }
-    return 0;
+
+    for (int i = 0; i < 10; i = i + 1) {
+        insert(t, i);
+    }
+    print_tree(t);
+    
+    return;
 }
