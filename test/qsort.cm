@@ -4,21 +4,33 @@ void quick(int[] a, int l, int r) {
     int i = l + 1;
     int j = r;
     int pivot = a[l];
-    while (i < j) {
-        int temp = a[i];
-        a[i] = a[j];
-        a[j] = temp;
-        while (i < j && a[i] < pivot) { i = i + 1; }
+    while (i <= j) {
         while (a[j] > pivot) { j = j - 1; }
+        while (i <= j && a[i] < pivot) { i = i + 1; }
+        if (i <= j) {
+            int temp = a[i];
+            a[i] = a[j];
+            a[j] = temp;
+        }
     }
+    a[l] = a[j];
     a[j] = pivot;
     quick(a, l, j - 1);
     quick(a, j + 1, r);
     return;
 }
 
-int main() {
-    int[] a = new int[100];
-    quick(a, 0, 99);
-    return 0;
+void main() {
+    int length = 10;
+    int[] a = new int[length];
+    for (int i = 0; i < length; i = i + 1) {
+        a[i] = length - i;
+    }
+
+    quick(a, 0, length-1);
+    for (int i = 0; i < length; i = i + 1) {
+        print_int(a[i]);
+    }
+
+    return;
 }

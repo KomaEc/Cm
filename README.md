@@ -43,7 +43,7 @@ opam install dune
 
 ## To Install and Uninstall
 ```bash
-make $(PLAT)
+make PLAT=$(PLAT)
 make clean
 ```
 Only macosx is supported:) 

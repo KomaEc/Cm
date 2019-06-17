@@ -90,24 +90,25 @@ let () =
           print_endline (Proc.string_of_t_list procs);
           (*let () = List.iter (fun proc -> Proc.(test(recover proc))) procs in*)
           (*let () = Proc.test procs in*)
-          let prog1 = T.get_mimple_after_pre () in 
-          Mimple.print_prog (prog1, Cm_core.Symbol.empty);
+         (* let prog1 = T.get_mimple_after_pre () in 
+          Mimple.print_prog (prog1, Cm_core.Symbol.empty); *)
 
-          Binary.compile (prog1, Cm_core.Symbol.empty);
+         (* Binary.compile (prog1, Cm_core.Symbol.empty);*)
 
-(*
+         print_endline "hi";
+
+
           let prog1 = T.get_mimple1() in 
-          Mimple.print_prog prog1;
+          Mimple.print_prog (prog1, Cm_core.Symbol.empty);
           print_newline();
           print_string "Analysis Result : \n\n";
-          Dfa.analysis_prog prog;
+          Dfa.analysis_prog (prog1, Cm_core.Symbol.empty);
           print_string "Optimizting... \n\n";
           let prog4 = T.optimize() in 
-          Mimple.print_prog prog4;
+          Mimple.print_prog (prog4, Cm_core.Symbol.empty);
 
           print_newline();
           Dataflow.print_result prog;
-          Pre.Test.from_prog prog; *)
           close_in inx
           )
   | _ -> fprintf stderr "Too many arguments! Expected 1\n"; exit(0)

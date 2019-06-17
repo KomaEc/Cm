@@ -247,6 +247,8 @@ let constant_propagation : M.func -> M.func * bool = fun func ->
   let cp_dfa = Dfa.Cp.constant_propagation func in
   let pred, succ = Dfa.calculate_pred_succ cp_dfa.instrs in
   let cp_res = Dfa.do_dfa cp_dfa pred succ |> fst in 
+  (*Dfa.Cp.string_of_func_with_result func cp_res Dfa.Cp.string_of_stmt_and_res
+  |> print_endline;*)
   let to_var i = fun t -> 
     match FiniteMap.find cp_res.(i) t with 
       | Dfa.Cp.Const(c) -> 
@@ -297,6 +299,8 @@ let dead_code_elimination : M.func -> M.func * bool = fun func ->
   let lv_dfa = Dfa.Lv.live_vars func in 
   let pred, succ = Dfa.calculate_pred_succ lv_dfa.instrs in 
   let lv_res = Dfa.do_dfa lv_dfa pred succ |> snd in 
+  (*Dfa.Lv.string_of_func_with_result func lv_res Dfa.Lv.string_of_stmt_and_res
+  |> print_endline;*)
   let instrs = 
     func.func_body 
     |> Array.of_list in 
@@ -331,14 +335,33 @@ let rec optimize : M.func -> M.func = fun func ->
 (*  ALERT : cp and cop have wrong semantics. 
  * 'cause the transfer functions only gen don't kill ! *)
 
-let rec optimize : M.func -> M.func = 
+let rec optimize' : M.func -> M.func = 
   let aux transfer (func, flag) = 
     let (func', flag') = transfer func in 
       (func', flag || flag') in 
   fun func -> 
     let (func, flag) = 
       aux constant_propagation (func, false) 
-      |> aux copy_propagation   
+      |> aux copy_propagation  
       |> aux dead_code_elimination in 
-    (if flag then optimize <-- compact
+    (if flag then optimize' <-- compact
     else compact) func
+
+let optimize : M.func -> M.func = fun func ->
+  func
+
+
+(*
+let rec optimize : M.func -> M.func = 
+  fun func -> 
+    let (func, flag) = constant_propagation func in 
+    print_endline (M.string_of_func func);
+    let (func, flag') = copy_propagation func in 
+    let flag = flag || flag' in 
+    print_endline (M.string_of_func func);
+    let (func, flag') = dead_code_elimination func in 
+    print_endline (M.string_of_func func);
+    let flag = flag || flag' in 
+    (if flag then optimize <-- compact else compact) func
+
+    *)

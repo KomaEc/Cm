@@ -4,7 +4,7 @@ int fib(int n) {
 }
 
 void main() {
-    int res = fib(5);
+    int res = fib(11);
     print_int(res);
     return;
 }

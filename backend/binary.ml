@@ -4,7 +4,7 @@ module Temp = Cm_core.Temp
 module Types = Cm_core.Types
 module Symbol = Cm_core.Symbol
 
-module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int end) = 
+module Config(X : sig val name2index : Symbol.t -> int val args : Temp.t list val lib_handler : int -> int -> int list -> lua_ops list * int val lib_length : int val is_child : bool end) = 
 struct
 
   module TempMap = Map.Make(struct type t = Temp.t let compare = compare end)
@@ -13,10 +13,16 @@ struct
 
     val cur_reg : int = List.length X.args
 
+    val mutable recursive_depth : int = 0
+
     val temps2reg : int TempMap.t = 
       let i = ref (-1) in 
       List.fold_left
         (fun acc t -> incr i; TempMap.add t !i acc) TempMap.empty X.args
+
+    method set_depth : int -> unit = fun d -> recursive_depth <- d
+
+    method get_depth : unit -> int = fun () -> recursive_depth
 
     method get_reg : unit -> int = fun () -> cur_reg
 
@@ -80,7 +86,12 @@ struct
           List.fold_left
             (fun (ops, o) reg -> 
               ops@[Move(o#get_reg(), reg)], o#incr ()) (ops, o) reg_list in
-        let ops= ops @ [Closure(f_reg, p_idx)] in
+        let func_ops = 
+        begin
+          if X.is_child then [Get_Global(f_reg, Symbol.name pname)]
+          else [Closure(f_reg, p_idx); Set_Global(Symbol.name pname, f_reg)] 
+        end in
+        let ops= ops @ func_ops in
         let ops = ops@[Call(f_reg, args_num+1, ret_num+1)] in 
         f_reg, ops, o
       | `New_array_expr(_, imm) -> 
@@ -177,6 +188,110 @@ struct
   end
 end
 
+module type LUA_PRINTER = 
+sig 
+  class visitor:
+  object('self)
+    method lua_ops : lua_ops -> string * 'self
+    method lua_const : lua_const -> string * 'self
+    method arith_op : arith_op -> string * 'self
+    method comparison_op : comparison_op -> string * 'self
+    method rk_source : rk_source -> string * 'self
+    method arith_op_types : arith_op_types -> string * 'self
+    method comparison_type : comparison_type -> string * 'self
+    method return_val : return_val -> string * 'self
+  end
+end
+
+module Printer : LUA_PRINTER = 
+struct 
+  class visitor = 
+  object((o : 'self))
+
+    val reg_helper : int -> string = 
+      fun i -> "reg%" ^ (string_of_int i)
+
+    method rk_source : rk_source -> string * 'self = function 
+      | `L_String s -> "\"" ^ s ^ "\"", o
+      | `L_Double d -> string_of_float d, o
+      | `L_Bool b -> string_of_bool b, o
+      | `L_Nill -> "nill", o
+      | `Register i -> "reg%" ^ (string_of_int i), o
+    method lua_const : lua_const -> string * 'self = 
+      fun lc -> o#rk_source (lc :> rk_source)
+
+    method arith_op_types : arith_op_types -> string * 'self = function
+      | Arith_Add -> "\t+\t", o
+      | Arith_Sub -> "\t-\t", o
+      | Arith_Mul -> "\t*\t", o
+      | Arith_Div -> "\t/\t", o
+    
+    method arith_op : arith_op -> string * 'self = 
+      fun { op_type; left_src; right_src; dest} -> 
+        let l, o = o#rk_source left_src in 
+        let r, o = o#rk_source right_src in 
+        let op, o = o#arith_op_types op_type in 
+        (reg_helper dest) ^ " = " ^ l ^ op ^ r, o
+    
+    method comparison_type : comparison_type -> string * 'self = function 
+      | Comp_Eq -> "\t=\t", o
+      | Comp_Le -> "\t<=\t", o
+      | Comp_Lt -> "\t<\t", o
+
+    method comparison_op : comparison_op -> string * 'self = 
+      fun { skip_if_not; right_operand; left_operand; comp_type } -> 
+        let l, o = o#rk_source left_operand in 
+        let r, o = o#rk_source right_operand in 
+        let op, o = o#comparison_type comp_type in 
+        l ^ op ^ r ^ "\t skip if not " ^ (string_of_bool skip_if_not), o
+
+    method return_val : return_val -> string * 'self = function 
+      | No_Value -> "", o
+      | Return_One i -> reg_helper i, o 
+      | _ -> failwith "imppossible"
+      
+    method lua_ops : lua_ops -> string * 'self = function
+      | Load_Const(i, lua_const) -> 
+        let const_string, o = o#lua_const lua_const in 
+        "load_const\t" ^ (reg_helper i) ^"\t"^ const_string, o
+      | Get_Global(i, s) -> 
+        "get_global\t"^(reg_helper i) ^ "\t\"" ^ s ^ "\"", o 
+      | Set_Global(s, i) -> 
+        "set_global\t" ^ "\t\"" ^ s ^ "\"\t"^(reg_helper i), o 
+      | Jump(i) -> 
+        "jump\t" ^ (string_of_int i), o
+      | Cmp(cmp) -> 
+        o#comparison_op cmp
+      | Move(i, j) -> 
+        "mov\t" ^ (reg_helper i) ^ "\t" ^ (reg_helper j), o
+      | Arith(arith) -> 
+        o#arith_op arith 
+      | Call(i, j, k) -> 
+        "call\t" ^ (reg_helper i) ^ "\t" ^ (string_of_int j)^ "\t" ^ (string_of_int k), o
+      | Closure(dest, p_index) -> 
+        "closure\t" ^ (reg_helper dest) ^ "\t" ^ (string_of_int p_index), o
+      | Load_Table(dst, table, key) ->
+        let s, o = o#rk_source key in
+        "load_table\t" ^ (reg_helper dst) ^ "\t" ^ (reg_helper table) ^ "\t" ^ s, o
+      | Set_Table(table, k, v) -> 
+        let s, o = o#rk_source k in 
+        let s', o = o#rk_source v in 
+        "set_table\t" ^ (reg_helper table) ^ "\t" ^ s ^ "\t" ^ s', o
+      | Make_Table(i, j, k) -> 
+        "make_table\t" ^ (reg_helper i) ^ "\t" ^ (string_of_int j) ^ "\t" ^ (string_of_int k), o
+      | Return(ret_val) -> 
+        let ret_s, o = o#return_val ret_val in 
+        "return\t" ^ ret_s, o
+      | _ -> 
+        failwith "can't print! unimplemented"
+  end
+end
+
+let string_of_lua : lua_ops list -> string = 
+  let visitor = new Printer.visitor in 
+  fun lua_list -> 
+    List.map (fun s -> "\t" ^ (visitor#lua_ops s |> fst) ^ "\n") lua_list
+    |> List.fold_left (^) ""
 
 
 
@@ -220,20 +335,26 @@ let compile (prog : prog) =
   List.iteri (fun i func -> Hashtbl.add tbl func.func_name i) funcs;
   let sub_units = 
     List.map (fun func -> 
-      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length end in 
+      let module X = struct let name2index = Hashtbl.find tbl let args = get_args func let lib_handler = lib_handler let lib_length = lib_func_length let is_child = true end in 
       let module C = Config(X) in 
       let visitor = new C.visitor in 
       let body = visitor#func func.func_body |> fst in 
+
+      let () = string_of_lua body |> print_endline in
+
       let num_params = List.length func.func_args in 
       {
         instructions = body;
         num_params;
         child_functions = [];
       }) funcs in
-  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length end in 
+  let module X = struct let name2index = Hashtbl.find tbl let args = [] let lib_handler = lib_handler let lib_length = lib_func_length let is_child = false end in 
   let module C = Config(X) in 
   let visitor = new C.visitor in 
-  let main_body = visitor#func main.func_body |> fst in 
+  let main_body = (visitor#func main.func_body |> fst) in 
+
+  let () = string_of_lua main_body |> print_endline in
+
   let func_unit = 
   {
     instructions = main_body;

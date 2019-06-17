@@ -428,7 +428,10 @@ and temps_in_expr : expr -> Temp.t list = function
   | `Bin(i1, _, i2) | `Rel(i1, _, i2) -> 
     temps_in_immediate i1 @ temps_in_immediate i2 
   | `Static_invoke(_, i_list) -> 
-    List.fold_left (fun acc i -> temps_in_immediate i @ acc) [] i_list 
+    (*let x = *)
+    List.fold_left (fun acc i -> temps_in_immediate i @ acc) [] i_list
+    (* in 
+    Cm_util.Printing.string_of_list string_of_temp x |> print_endline; x*)
   | `New_array_expr(_, i) -> temps_in_immediate i 
   | _ -> [] 
 

@@ -116,6 +116,7 @@ let do_dfa (dfa : 'a dfa) (pred : int list array) (succ : int list array)
       | D_Backward -> succ, pred in
 
   let init () = 
+  (*
     match dfa.dir with 
       | D_Forward -> 
         (* Queue.add 0 worklist;
@@ -132,6 +133,10 @@ let do_dfa (dfa : 'a dfa) (pred : int list array) (succ : int list array)
           | `Ret_void -> (*Queue.add i worklist;*)
             List.iter (fun k -> Queue.add k worklist) succ.(i) 
           | _ -> ()) dfa.instrs
+          *)
+    for i = 0 to length - 1 do 
+      Queue.add i worklist 
+    done
     in
 
   let ( <+> ) : 'a -> 'a -> 'a = dfa.meet in
@@ -185,6 +190,11 @@ module LiveVariable = struct
   let transfer : M.stmt -> T.t Bs.t -> T.t Bs.t = 
     let open M in 
     function
+      | `Assign(`Array_ref(imm1, imm2), rvalue) -> 
+        let trvs = temps_in_rvalue rvalue in 
+        let vs = temps_in_immediate imm1 in 
+        let vs' = temps_in_immediate imm2 in 
+        fun pre_fact -> gen (gen (kill pre_fact vs) vs') trvs
       | `Assign(var, rvalue) -> 
         let tvars = temps_in_var var in 
         let trvs = temps_in_rvalue rvalue in 
@@ -194,6 +204,7 @@ module LiveVariable = struct
         fun pre_fact -> gen pre_fact tconds
       | `Static_invoke(x) -> 
         let texprs = temps_in_expr (`Static_invoke(x)) in
+        (*Cm_util.Printing.string_of_list T.string_of_temp texprs |> print_endline ;*)
         fun pre_fact -> gen pre_fact texprs
       | `Ret(i) ->
         let tis = temps_in_immediate i in 

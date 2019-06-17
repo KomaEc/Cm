@@ -109,7 +109,7 @@ let get_mimple () =
   List.rev !prog_frag |> List.map T.simplify_func
 
 let get_mimple_after_pre () = 
-  List.rev !prog_frag |> List.map T.pre_optimize
+  List.rev !prog_frag |> List.map T.pre_optimize |> List.map (T.optimize <-- T.simplify_func)
 
 let get_mimple1 () = 
   List.rev !prog_frag |> List.map (M.convert_to_lnum <-- T.simplify_func)
