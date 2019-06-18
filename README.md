@@ -1,6 +1,6 @@
 # Cm
 ## Intro
-A compiler for a syntactically C-like imperative programming language, supporting (currently) one-dimentional array and struct. The front end is not very well-designed, while the mid end focuses on data flow analysis (with generic interface). The back end is trash (compiling to lua vm).
+A compiler for a syntactically C-like imperative programming language, supporting (currently) array and struct. The front end is not very well-designed, while the mid end focuses on data flow analysis (with generic interface). The back end is trash (compiling to lua vm).
 
 ## Programming Paradigm
 * Generic. This compiler has a generic interface to data flow problem using OCaml module system. It is easy to extend.
