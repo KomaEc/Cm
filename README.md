@@ -45,7 +45,7 @@ opam install menhir
 
 ## To Install and Uninstall
 ```bash
-make PLAT=$(PLAT)
+make PLAT=macosx
 make clean
 ```
 Only macosx is supported:) 
