@@ -27,7 +27,8 @@ struct
     method const : const -> lua_const * 'self = function
       | `Null_const -> `L_Nill, o
       | `Int_const(i) -> `L_Double(float_of_int(i)), o
-      | `Bool_const(b) -> `L_Bool(b), o
+      | `Bool_const(true) -> `L_Double(1.0), o
+      | `Bool_const(false) -> `L_Double(0.0), o
 
     method immediate : immediate -> rk_source * 'self = function 
       | `Const(const) -> 

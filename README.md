@@ -3,7 +3,7 @@
 A compiler for a syntactically C-like imperative programming language, supporting (currently) array and struct. The front end is not very well-designed, while the mid end focuses on data flow analysis (with generic interface). The back end is trash (compiling to lua vm).
 
 ## Programming Paradigm
-* Generic. This compiler has a generic interface to data flow problem using OCaml module system. It is easy to extend.
+* Generic. This compiler has a generic interface to data flow problem using OCaml module system. The interface is designed to be extensible. All of my implementations of data flow analysis make use of this generic interface
 * Visitor Pattern. In the intermediate representation and control flow graph, this compiler uses visitor pattern to traverse abstract syntax tree, graph, etc. This part makes use of OCaml object system. Using object to represent visitor makes it easy to record state while traversing.
 
 ## Workflow
