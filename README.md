@@ -12,6 +12,7 @@ A compiler for a syntactically C-like imperative programming language, supportin
 * Translating to IR
 * Optimizing (partial redundancy elimination, propagation + dead code elimination)
 * Translating to lua bytecode
+* (Auxilary) Producing `.dot` file for each procedure
 
 ## Semantics Checking
 The `semant.ml` file checks def-before-use, variable initialization (not include field initialization), type and proper return. For a sequence of statements, when checking proper return, if some statement already returns, the statements behind it can have arbitrary return semantics (since we really don't care about it).
