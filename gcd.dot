@@ -1,0 +1,49 @@
+digraph gcd {
+	"Entry
+"->"No.1
+  if _t0 < _t1 goto 5
+";
+	"No.1
+  if _t0 < _t1 goto 5
+"->"No.2
+  if _t1 == 0 goto 4
+";
+	"No.2
+  if _t1 == 0 goto 4
+"->"No.3
+  _t2 = _t0 - _t1
+  _t3 = gcd [(int, int) : int](_t1, _t2)
+  return _t3
+";
+	"No.3
+  _t2 = _t0 - _t1
+  _t3 = gcd [(int, int) : int](_t1, _t2)
+  return _t3
+"->"Exit
+";
+	"No.2
+  if _t1 == 0 goto 4
+"->"No.4
+  return _t0
+";
+	"No.4
+  return _t0
+"->"Exit
+";
+	"No.1
+  if _t0 < _t1 goto 5
+"->"No.5
+  tmp = _t0
+  _t0 = _t1
+  _t1 = tmp
+  goto 2
+";
+	"No.5
+  tmp = _t0
+  _t0 = _t1
+  _t1 = tmp
+  goto 2
+"->"No.2
+  if _t1 == 0 goto 4
+";
+}

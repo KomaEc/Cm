@@ -69,6 +69,7 @@ let () =
           |> parse_with_error
           |> simplify
           |> check_with_error
+          |> (fun prog -> Cm_core.Procdesc.output_prog prog; (*M.print_prog prog; *)prog)
           |> Binary.compile;
           close_in inx)
   | _ -> fprintf stderr "Too many arguments! Expected 1\n"; exit(0)

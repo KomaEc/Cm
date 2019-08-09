@@ -492,21 +492,20 @@ and string_of_stmt : stmt -> string =
   function 
     | `Assign(var, rvalue) -> 
       "  " ^ string_of_value (var_to_rvalue var) ^ " = " ^ string_of_value rvalue 
-      ^ ";"
     | `Label(l) -> 
-      string_of_label l ^ ":"
+      string_of_label l
     | `Goto(l) -> 
-      "  goto " ^ string_of_target l ^ ";"
+      "  goto " ^ string_of_target l
     | `If(`Temp(t), l) -> 
-      "  if " ^ string_of_temp t ^ " goto " ^ string_of_target l ^ ";"
+      "  if " ^ string_of_temp t ^ " goto " ^ string_of_target l
     | `If(`Rel(_) as rexpr, l) -> 
-      "  if " ^ string_of_expr rexpr ^ " goto " ^ string_of_target l ^ ";"
+      "  if " ^ string_of_expr rexpr ^ " goto " ^ string_of_target l
     | `Static_invoke(_) as expr -> 
-      "  " ^ string_of_expr expr ^ ";"
+      "  " ^ string_of_expr expr
     | `Ret(i) -> 
-      "  return " ^ string_of_value (immediate_to_rvalue i) ^ ";"
+      "  return " ^ string_of_value (immediate_to_rvalue i)
     | `Ret_void -> 
-      "  return;"
+      "  return"
     | `Nop -> ""
 
 and string_of_decl : local_decl -> string = 

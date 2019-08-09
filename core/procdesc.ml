@@ -4,6 +4,7 @@ module M = Mimple
 open P
 module U = Cm_util.Util
 open U
+module Dot = Cm_util.Dot
 
 module Node = struct 
 
@@ -41,6 +42,10 @@ module Node = struct
     pred = [];
     succ = [];
   }
+
+  let exit_id = -2
+
+  let entry_id = -1
 
   let is_exit : t -> bool = fun node -> node.id = -2
   
@@ -154,6 +159,15 @@ module Node = struct
     res := !res ^ "\n======End node " ^ string_of_int node.id ^ "=====\n\n";
     !res
 
+  let dot_string_of_node : t -> string = fun node -> 
+    let idx = match is_internal node with
+      | true -> "No." ^ string_of_int @@ get_id node
+      | _ when is_entry node -> "Entry"
+      | _ -> "Exit" in
+    let content = Array.fold_left
+      (fun acc stmt -> acc ^ M.string_of_stmt stmt ^ "\n") "" @@ get_instrs node in
+    "\"" ^ idx ^ "\n" ^ content ^ "\""
+
 end 
 
 
@@ -178,6 +192,39 @@ let fold : ('acc -> Node.t -> 'acc) -> 'acc -> t -> 'acc =
     List.fold_left f acc proc.nodes
 
 
+module type EDGE_VISITOR = 
+sig
+  class visitor : 
+  object('self)
+    method proc : t -> (Node.t -> Node.t -> unit) -> unit * 'self
+    method node : Node.t -> (Node.t -> Node.t -> unit) -> unit * 'self
+  end
+end
+
+module Edge_traverser =
+struct
+  module IntSet = Set.Make(struct type t = int let compare = compare end)
+  let mem node set = let id = Node.get_id node in IntSet.mem id set
+  let add node set = let id = Node.get_id node in IntSet.add id set
+  class visitor = 
+  object((o : 'self))
+    val checked : IntSet.t = IntSet.empty
+    method get_checked () = checked
+    method node : Node.t -> (Node.t -> Node.t -> unit) -> unit * 'self =
+      fun node to_edge -> (* Precondition: node is never visited *)
+        let checked' = add node @@ o#get_checked() in
+        Node.fold_succ
+          (fun o' node' -> 
+          to_edge node node';
+          if mem node' @@ o'#get_checked() 
+            then o' 
+            else snd @@ o'#node node' to_edge) {<checked=checked'>} node
+        |> fun o -> (), o
+    method proc : t -> (Node.t -> Node.t -> unit) -> unit * 'self = 
+      fun proc -> 
+        o#node proc.start_node
+  end
+end
 
 module type PROC_FOLDER = 
 sig
@@ -290,6 +337,20 @@ let layout (proc : t) =
       proc []
   |> List.rev
 
+
+let cfg_to_dot : t -> Dot.graph = fun proc -> 
+  let proc_name = Symbol.name proc.pname in
+  let stmt_list_ref = ref [] in
+  let to_edge node1 node2 = 
+    let n1, n2 = Node.dot_string_of_node node1, Node.dot_string_of_node node2 in 
+    stmt_list_ref := Dot.make_edge `Digraph [n1; n2] :: !stmt_list_ref in
+  let visitor = new Edge_traverser.visitor in
+  ignore @@ visitor#proc proc to_edge;
+  (false, `Digraph, Some proc_name, List.rev !stmt_list_ref)
+
+
+let output_proc : t -> unit = 
+  Dot.output_graph <-- cfg_to_dot
 (*
  let test (procs : t list) = 
   let s = 
@@ -299,6 +360,25 @@ let layout (proc : t) =
   print_endline s
 
 *)
+let eliminate_empty_node_to_exit (proc : t) : t = 
+  let worklist = Queue.create() in 
+  let () = Node.iter_pred (fun node -> Queue.add node worklist) proc.exit_node in 
+  while not (Queue.is_empty worklist) do
+    let node = Queue.pop worklist in
+    if Array.length (Node.get_instrs node) = 0 then begin
+      Node.iter_pred
+        (fun node' -> 
+          node'.succ <- List.fold_right (fun node'' rest -> 
+            if (Node.get_id node'' = Node.get_id node) then proc.exit_node :: rest else node'' :: rest) node'.succ []) node;
+      proc.exit_node.pred <- 
+        List.fold_right 
+          (fun node rest -> 
+            node :: List.filter (
+                fun node' -> Node.get_id node' <> Node.get_id node
+            ) rest) (Node.get_preds node) proc.exit_node.pred 
+      end
+    done;
+  proc
 
 module BlockNum2LNum = 
 struct 
@@ -367,7 +447,9 @@ let insert_all_label : M.stmt list -> M.stmt list = fun stmt_list ->
   aux stmt_list |> List.map (fst <-- visitor#stmt)
 
 let recover (proc : t) : M.stmt list = 
+  let proc = eliminate_empty_node_to_exit proc in
   let () = insert_goto proc in
+  (*let () = output_proc proc in*)
   let order = layout proc 
   and id2node = Hashtbl.create 16 
   and id2lnum = Hashtbl.create 16 in 
@@ -437,11 +519,14 @@ let find_leader (instrs : M.stmt array) : bool array =
   let length = Array.length instrs in
   let is_leader = Array.make (length + 1) false in
   is_leader.(length) <- true;
+  is_leader.(0) <- true;
   Array.iteri 
   (fun i -> function 
-    | _ when i = 0 -> is_leader.(i) <- true 
+    (*| _ when i = 0 -> is_leader.(i) <- true*) 
     | `Goto(`Line_num(j)) | `If(_, `Line_num(j)) -> 
       is_leader.(j) <- true;
+      if i < length - 1 then is_leader.(i+1) <- true
+    | `Ret_void | `Ret _ -> 
       if i < length - 1 then is_leader.(i+1) <- true
     | _ -> ()) instrs;
   is_leader
@@ -508,11 +593,16 @@ let from_func (func: M.func) (find_leader : M.stmt array -> bool array) : t =
   Hashtbl.add tbl 0 0 ;
   for r = 1 to length do 
     if is_leader.(r) then 
+    (
     let newinstrs = Array.make (r - !l) `Nop in 
     Array.blit instrs !l newinstrs 0 (r - !l);
+    (*print_endline @@ "block id : " ^ string_of_int @@ !id+1;
+    Array.iter (print_endline <-- M.string_of_stmt) newinstrs;
+    print_endline @@ "with leading stmt : " ^ M.string_of_stmt newinstrs.(0);
+    print_endline @@ "with leading idx : " ^ string_of_int r;*)
     let node = Node.make (*!id *)newinstrs !l func.func_name in 
     Hashtbl.add tbl r (!id + 1);
-    nodes_ref := node :: !nodes_ref; incr id; l := r
+    nodes_ref := node :: !nodes_ref; incr id; l := r)
   done;
   let nodes = !nodes_ref |> List.rev in 
   let nodes_array = Array.of_list nodes in
@@ -534,6 +624,8 @@ let from_func (func: M.func) (find_leader : M.stmt array -> bool array) : t =
                  (node.succ <- nodes_array.(i+1) :: node.succ;
                  nodes_array.(i+1).pred <- node :: nodes_array.(i+1).pred);
                  node.instrs.(lst_idx) <- `If(c, `Line_num(id'+1))
+               | `Ret_void | `Ret _ -> 
+                 node.succ <- []
                | _ -> 
                  if i < length_of_nodes - 1 then 
                  (node.succ <- nodes_array.(i+1) :: node.succ;
@@ -582,3 +674,14 @@ let from_prog : M.prog -> t list =
 let string_of_t_list : t list -> string = 
   List.fold_left 
   (fun str proc -> str ^ "\n" ^ string_of_proc proc) "" 
+
+let from_prog_to_block : M.prog -> t list = 
+  List.map from_func <-- fst
+
+let output_func : M.func -> unit = 
+  fun func -> 
+    let proc = from_func func in
+    Dot.output_graph @@ cfg_to_dot proc
+
+let output_prog : M.prog -> unit = fun (prog, _) -> 
+  List.iter output_func prog

@@ -1,0 +1,127 @@
+digraph quick {
+	"Entry
+"->"No.1
+  if _t1 < _t2 goto 3
+";
+	"No.1
+  if _t1 < _t2 goto 3
+"->"No.2
+  return
+";
+	"No.2
+  return
+"->"Exit
+";
+	"No.1
+  if _t1 < _t2 goto 3
+"->"No.3
+  i = _t1 + 1
+  j = _t2
+  pivot = _t0[_t1]
+";
+	"No.3
+  i = _t1 + 1
+  j = _t2
+  pivot = _t0[_t1]
+"->"No.4
+  if i > j goto 12
+";
+	"No.4
+  if i > j goto 12
+"->"No.5
+  _t3 = _t0[j]
+  if _t3 > pivot goto 11
+";
+	"No.5
+  _t3 = _t0[j]
+  if _t3 > pivot goto 11
+"->"No.6
+  if i > j goto 8
+";
+	"No.6
+  if i > j goto 8
+"->"No.7
+  _t4 = _t0[i]
+  if _t4 < pivot goto 10
+";
+	"No.7
+  _t4 = _t0[i]
+  if _t4 < pivot goto 10
+"->"No.8
+  if i > j goto 4
+";
+	"No.8
+  if i > j goto 4
+"->"No.9
+  temp = _t0[i]
+  _t0[i] = _t0[j]
+  _t0[j] = temp
+  goto 4
+";
+	"No.9
+  temp = _t0[i]
+  _t0[i] = _t0[j]
+  _t0[j] = temp
+  goto 4
+"->"No.4
+  if i > j goto 12
+";
+	"No.8
+  if i > j goto 4
+"->"No.4
+  if i > j goto 12
+";
+	"No.7
+  _t4 = _t0[i]
+  if _t4 < pivot goto 10
+"->"No.10
+  i = i + 1
+  goto 6
+";
+	"No.10
+  i = i + 1
+  goto 6
+"->"No.6
+  if i > j goto 8
+";
+	"No.6
+  if i > j goto 8
+"->"No.8
+  if i > j goto 4
+";
+	"No.5
+  _t3 = _t0[j]
+  if _t3 > pivot goto 11
+"->"No.11
+  j = j - 1
+  goto 5
+";
+	"No.11
+  j = j - 1
+  goto 5
+"->"No.5
+  _t3 = _t0[j]
+  if _t3 > pivot goto 11
+";
+	"No.4
+  if i > j goto 12
+"->"No.12
+  _t0[_t1] = _t0[j]
+  _t0[j] = pivot
+  _t5 = j - 1
+  quick [(int[], int, int) : void](_t0, _t1, _t5)
+  _t6 = j + 1
+  quick [(int[], int, int) : void](_t0, _t6, _t2)
+  return
+";
+	"No.12
+  _t0[_t1] = _t0[j]
+  _t0[j] = pivot
+  _t5 = j - 1
+  quick [(int[], int, int) : void](_t0, _t1, _t5)
+  _t6 = j + 1
+  quick [(int[], int, int) : void](_t0, _t6, _t2)
+  return
+"->"Exit
+";
+}

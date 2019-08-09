@@ -1,0 +1,44 @@
+digraph fib {
+	"Entry
+"->"No.1
+  if _t0 == 1 goto 4
+";
+	"No.1
+  if _t0 == 1 goto 4
+"->"No.2
+  if _t0 == 2 goto 4
+";
+	"No.2
+  if _t0 == 2 goto 4
+"->"No.3
+  _t1 = _t0 - 1
+  _t2 = fib [(int) : int](_t1)
+  _t3 = _t0 - 2
+  _t4 = fib [(int) : int](_t3)
+  _t5 = _t2 + _t4
+  return _t5
+";
+	"No.3
+  _t1 = _t0 - 1
+  _t2 = fib [(int) : int](_t1)
+  _t3 = _t0 - 2
+  _t4 = fib [(int) : int](_t3)
+  _t5 = _t2 + _t4
+  return _t5
+"->"Exit
+";
+	"No.2
+  if _t0 == 2 goto 4
+"->"No.4
+  return 1
+";
+	"No.4
+  return 1
+"->"Exit
+";
+	"No.1
+  if _t0 == 1 goto 4
+"->"No.4
+  return 1
+";
+}

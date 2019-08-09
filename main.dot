@@ -1,0 +1,14 @@
+digraph main {
+	"Entry
+"->"No.1
+  _t4 = gcd [(int, int) : int](21, 6)
+  print_int [(int) : void](_t4)
+  return
+";
+	"No.1
+  _t4 = gcd [(int, int) : int](21, 6)
+  print_int [(int) : void](_t4)
+  return
+"->"Exit
+";
+}
